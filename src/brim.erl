@@ -12,6 +12,8 @@
          content/3,
          do/2,
          document/1,
+         id/2,
+         id/3,
          map/4,
          print/1,
          render/1,
@@ -77,6 +79,14 @@ attr(Selector, Key, Value) when is_list(Key), is_list(Value) ->
 attr(Tree, Selector, Key, Value) when is_list(Key), is_list(Value) ->
     ziptree:transform(Tree, predicate_transform(Selector, fun(Z) ->
         brim_html:set_attr(Z, Key, Value)
+    end)).
+
+id(Selector, ID) when is_list(ID) ->
+    fun (Tree) -> id(Tree, Selector, ID) end.
+
+id(Tree, Selector, ID) when is_list(ID) ->
+    ziptree:transform(Tree, predicate_transform(Selector, fun(Z) ->
+        brim_html:set_id(Z, ID)
     end)).
 
 class(Selector, Class) when is_list(Class) ->
