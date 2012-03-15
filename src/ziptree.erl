@@ -1,3 +1,5 @@
+%%% Copyright (c) 2012 Per Melin <p@greendale.se>. See file LICENSE.
+
 -module(ziptree).
 
 -export([delete/1,
