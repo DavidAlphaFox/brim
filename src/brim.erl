@@ -15,14 +15,22 @@
          id/2,
          id/3,
          map/4,
+         print/0,
          print/1,
+         render/0,
          render/1,
          remove_class/2,
          remove_class/3,
          snippet/2]).
 
+render() ->
+    fun(Tree) -> render(Tree) end.
+
 render(Tree) ->
     brim_html:render(Tree).
+
+print() ->
+    fun(Tree) -> print(Tree) end.
 
 print(Tree) ->
     io:format("~s~n", [brim_html:render(Tree)]).
