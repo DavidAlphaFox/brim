@@ -45,16 +45,13 @@ value({_, Siblings}) ->
 on_branch({_, Siblings}) ->
     case ziplist:value(Siblings) of
         {_, _}  -> true;
-        {_}     -> false;
-        error   -> error
+        _       -> false
     end.
 
 on_nonempty_branch({_, Siblings}) ->
     case ziplist:value(Siblings) of
-        {_, []} -> false;
-        {_, _}  -> true;
-        {_}     -> false;
-        error   -> error
+        {_, [_|_]} -> true;
+        _          -> false
     end.
 
 subtree({_, Siblings}) ->
