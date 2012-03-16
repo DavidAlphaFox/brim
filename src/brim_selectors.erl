@@ -31,6 +31,10 @@ pred([Selector|T], Pred) ->
                 Pred(Tree) andalso
                     compare_attr(brim_html:attribute(Tree, Attr), Test, Val)
             end);
+        {pseudo, "empty"} ->
+            pred(T, fun(Tree) ->
+                brim_html:is_empty(Tree) andalso Pred(Tree)
+            end);
         {pseudo, "nth-child", N} ->
             pred(T, is_nth_pred(Pred, fun is_nth/3, fun ziptree:left/1, N));
         {pseudo, "nth-last-child", N} ->

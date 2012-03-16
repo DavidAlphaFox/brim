@@ -11,6 +11,8 @@
          classes/1,
          attribute/2,
          is_type/2,
+         is_element/1,
+         is_empty/1,
          has_id/2,
          has_class/2]).
 
@@ -61,7 +63,7 @@ attribute(Tree, Attr) ->
     value(Attr, Attrs).
 
 is_type(Tree, "*") ->
-    type(Tree) /= error;
+    is_element(Tree);
 is_type(Tree, Type) ->
     type(Tree) == Type.
 
@@ -73,6 +75,12 @@ has_class(Tree, ID) ->
         error   -> false;
         Classes -> lists:member(ID, Classes)
     end.
+
+is_element(Tree) ->
+    type(Tree) /= error.
+
+is_empty(Tree) ->
+    is_element(Tree) andalso not ziptree:on_nonempty_branch(Tree).
 
 set_attr(Tree, "id", ID) ->
     set_id(Tree, ID);
