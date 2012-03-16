@@ -10,8 +10,6 @@
               orelse C =:= $-
               orelse C =:= $_).
 
--define(is_numeric(C), C >= $0 andalso C =< $9).
-
 -define(is_whitespace(C), C =:= 32
                    orelse C =:= 9).
 
@@ -39,8 +37,8 @@ lex(['.', {ident, I}|T]) ->
 lex([':', {ident, "not"}, '('|T]) ->
     {T1, T2} = match_parenthesis(T),
     [{'not', lex(T1)}|lex(T2)];
-lex([':', {ident, I}, '(', {number, N}, ')'|T]) ->
-    [{pseudo, I, N}|lex(T)];
+lex([':', {ident, I}, '(', {ident, N}, ')'|T]) ->
+    [{pseudo, I, try_to_integer(N)}|lex(T)];
 lex([':', {ident, I}|T]) ->
     [{pseudo, I}|lex(T)];
 lex(['[', {ident, I}, ']'|T]) ->
@@ -77,7 +75,6 @@ tokenize([H|T] = S) ->
                      ?is_combinator(H) -> combinator(S);
                      H =:= $*          -> star(S);
                      ?is_match(H)      -> match(S);
-                     ?is_numeric(H)    -> number(S);
                      ?is_ident(H)      -> ident(S);
                      H =:= $"          -> string(T);
                      H =:= $#          -> {'#', T};
@@ -105,14 +102,6 @@ ident([H|T], A) when ?is_ident(H) ->
     ident(T, [H|A]);
 ident(T, A) ->
     {{ident, lists:reverse(A)}, T}.
-
-number(S) ->
-    number(S, []).
-
-number([H|T], A) when ?is_numeric(H) ->
-    number(T, [H|A]);
-number(T, A) ->
-    {{number, list_to_integer(lists:reverse(A))}, T}.
 
 whitespace([H|T]) when ?is_whitespace(H) ->
     whitespace(T);
@@ -163,3 +152,8 @@ match_parenthesis([H|T], A, N) ->
 match_parenthesis([], A, _) ->
     throw({unmatched_parenthesis, [lists:reverse(A)]}).
 
+try_to_integer(S) ->
+    try list_to_integer(S)
+    catch
+        error:badarg -> S
+    end.
