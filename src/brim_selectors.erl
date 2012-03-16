@@ -67,7 +67,12 @@ pred([Selector|T], Pred) ->
         {relation, ancestor} ->
             RelPred = pred(T, ?true),
             fun(Tree) ->
-                Pred(Tree) andalso find_ancestors(Tree, RelPred)
+                Pred(Tree) andalso find_relative(Tree, RelPred, fun ziptree:up/1)
+            end;
+        {relation, sibling} ->
+            RelPred = pred(T, ?true),
+            fun(Tree) ->
+                Pred(Tree) andalso find_relative(Tree, RelPred, fun ziptree:left/1)
             end;
         {element, Type} ->
             pred(T, fun(Tree) ->
@@ -84,10 +89,10 @@ compare_attr(A, ends_with,   B) -> lists:suffix(B, A);
 compare_attr(A, contains,    B) -> string:str(A, B) > 0;
 compare_attr(A, includes,    B) -> lists:member(B, string:tokens(A, " ")).
 
-find_ancestors(Tree, Pred) ->
-    case ziptree:up(Tree) of
-        error  -> false;
-        Parent -> Pred(Parent) orelse find_ancestors(Parent, Pred)
+find_relative(Tree, Pred, Step) ->
+    case Step(Tree) of
+        error    -> false;
+        Relative -> Pred(Relative) orelse find_relative(Relative, Pred, Step)
     end.
 
 is_nth_pred(Pred, TestFun, StepFun, N) ->

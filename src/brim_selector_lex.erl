@@ -16,7 +16,7 @@
 -define(is_combinator(C), C =:= 32
                    orelse C =:= $>
                    orelse C =:= $+
-                   orelse C =:= $-).
+                   orelse C =:= $~).
 
 -define(is_match(C), C =:= $=
               orelse C =:= $~
@@ -124,7 +124,7 @@ combinator(T, A) ->
     case string:strip(lists:reverse(A)) of
         ">" -> {{relation, parent}, T};
         "+" -> {{relation, adjacent}, T};
-        "-" -> {{relation, sibling}, T};
+        "~" -> {{relation, sibling}, T};
         M   -> throw({syntax_error, [M]})
     end.
 
