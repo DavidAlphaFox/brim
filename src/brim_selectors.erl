@@ -24,7 +24,7 @@ pred([Selector|T], Pred) ->
             end);
         {attrib, Attr} ->
             pred(T, fun(Tree) ->
-                Pred(Tree) andalso brim_html:attribute(Tree, Attr) /= error
+                brim_html:attribute(Tree, Attr) /= error andalso Pred(Tree)
             end);
         {attrib, Attr, Test, Val} ->
             pred(T, fun(Tree) ->
