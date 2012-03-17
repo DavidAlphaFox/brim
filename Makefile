@@ -3,7 +3,7 @@ all: compile
 compile:
 	@./rebar compile
 
-test:
+test: compile
 	@./rebar eunit -v
 
 clean:

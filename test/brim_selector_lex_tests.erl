@@ -9,7 +9,7 @@ basic_test() ->
     ?assertEqual([{element, "div"}],        scan("div")),
     ?assertEqual([{class, "foo"}],          scan(".foo")),
     ?assertEqual([{id, "foo"}],             scan("#foo")),
-    ?assertEqual([{pseudo, "first-child"}], scan(":first-child")).
+    ?assertEqual([{pseudo, 'first-child'}], scan(":first-child")).
 
 attrib_test() ->
     ?assertEqual([{attrib, "src"}],                     scan("[src]")),
@@ -17,8 +17,8 @@ attrib_test() ->
     ?assertEqual([{attrib, "src", begins_with, "foo"}], scan("[src^=foo]")),
     ?assertEqual([{attrib, "src", ends_with, "foo"}],   scan("[src$=foo]")),
     ?assertEqual([{attrib, "src", contains, "foo"}],    scan("[src*=foo]")),
-    % BUG: ?assertEqual([{attrib, "src", include, "foo"}],     scan("[src~=foo]")),
-    ?assertEqual([{attrib, "src", equals, "f b"}],  scan("[src=\"f b\"]")).
+    ?assertEqual([{attrib, "src", includes, "foo"}],    scan("[src~=foo]")),
+    ?assertEqual([{attrib, "src", equals, "f b"}],      scan("[src=\"f b\"]")).
 
 attrib_whitespace_test() ->
     ?assertEqual([{attrib, "src", equals, "foo"}],      scan("[ src = foo ]")),
@@ -31,7 +31,7 @@ invalid_attrib_test() ->
     ?assertError(syntax_error, scan("[=]")),
     ?assertError(syntax_error, scan("[.a]")),
     ?assertError(syntax_error, scan("[:a]")),
-    % BUG: ?assertError(syntax_error, scan("[*]")),
+    ?assertError(syntax_error, scan("[*]")),
     ?assertError(syntax_error, scan("[a b]")),
     ?assertError(syntax_error, scan("[a<b]")),
     ?assertError(syntax_error, scan("[a==c]")),
@@ -40,16 +40,16 @@ invalid_attrib_test() ->
     ?assertError(syntax_error, scan("[a=b c]")).
 
 pseudo_arg_test() ->
-    ?assertEqual([{pseudo, "nth-child", 4711}], scan(":nth-child(4711)")),
-    ?assertEqual([{pseudo, "nth-child", "foo"}], scan(":nth-child(foo)")).
+    ?assertEqual([{pseudo, 'nth-child', 4711}], scan(":nth-child(4711)")),
+    ?assertEqual([{pseudo, 'nth-child', "foo"}], scan(":nth-child(foo)")).
 
 pseudo_whitespace_test() ->
-    ?assertEqual([{pseudo, "nth-child", 4711}], scan(":nth-child( 4711 )")),
-    ?assertEqual([{pseudo, "nth-child", "foo"}], scan(":nth-child( foo )")).
+    ?assertEqual([{pseudo, 'nth-child', 4711}], scan(":nth-child( 4711 )")),
+    ?assertEqual([{pseudo, 'nth-child', "foo"}], scan(":nth-child( foo )")).
 
 invalid_pseudo_arg_test() ->
     ?assertError(syntax_error, scan(":nth-child()")),
-    % BUG: ?assertError(syntax_error, scan(":nth-child(*)")),
+    ?assertError(syntax_error, scan(":nth-child(*)")),
     ?assertError(syntax_error, scan(":nth-child([a])")),
     ?assertError(syntax_error, scan(":nth-child(:a)")),
     ?assertError(syntax_error, scan(":nth-child(a b)")),
@@ -78,11 +78,11 @@ together_test() ->
                   {id, "bbb"},
                   {class, "ccc"},
                   {class, "ddd"},
-                  {pseudo, "eee"},
+                  {pseudo, 'eee'},
                   {attrib, "fff"},
                   {class, "ggg"},
                   {attrib, "hhh", equals, "iii"},
-                  {pseudo, "jjj", "hhh"}],
+                  {pseudo, 'jjj', "hhh"}],
                  scan("aaa#bbb.ccc.ddd:eee[fff].ggg[hhh=iii]:jjj(hhh)")).
 
 together_with_relations_test() ->
@@ -95,7 +95,7 @@ together_with_relations_test() ->
                   {element, "*"},
                   {relation, ancestor},
                   {element, "*"},
-                  {pseudo, "eee"},
+                  {pseudo, 'eee'},
                   {relation, adjacent},
                   {attrib, "fff"}],
                  scan("aaa.bbb > ccc#ddd * *:eee + [fff]")).

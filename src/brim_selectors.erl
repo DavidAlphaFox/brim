@@ -31,27 +31,27 @@ pred([Selector|T], Pred) ->
                 Pred(Tree) andalso
                     compare_attr(brim_html:attribute(Tree, Attr), Test, Val)
             end);
-        {pseudo, "empty"} ->
+        {pseudo, empty} ->
             pred(T, fun(Tree) ->
                 brim_html:is_empty(Tree) andalso Pred(Tree)
             end);
-        {pseudo, "nth-child", N} ->
+        {pseudo, 'nth-child', N} ->
             pred(T, is_nth_pred(Pred, fun is_nth/3, fun ziptree:left/1, N));
-        {pseudo, "nth-last-child", N} ->
+        {pseudo, 'nth-last-child', N} ->
             pred(T, is_nth_pred(Pred, fun is_nth/3, fun ziptree:right/1, N));
-        {pseudo, "first-child"} ->
+        {pseudo, 'first-child'} ->
             pred(T, is_nth_pred(Pred, fun is_nth/3, fun ziptree:left/1, 1));
-        {pseudo, "last-child"} ->
+        {pseudo, 'last-child'} ->
             pred(T, is_nth_pred(Pred, fun is_nth/3, fun ziptree:right/1, 1));
-        {pseudo, "nth-of-type", N} ->
+        {pseudo, 'nth-of-type', N} ->
             pred(T, is_nth_pred(Pred, fun is_nth_of_type/3, fun ziptree:left/1, N));
-        {pseudo, "nth-last-of-type", N} ->
+        {pseudo, 'nth-last-of-type', N} ->
             pred(T, is_nth_pred(Pred, fun is_nth_of_type/3, fun ziptree:right/1, N));
-        {pseudo, "first-of-type"} ->
+        {pseudo, 'first-of-type'} ->
             pred(T, is_nth_pred(Pred, fun is_nth_of_type/3, fun ziptree:left/1, 1));
-        {pseudo, "last-of-type"} ->
+        {pseudo, 'last-of-type'} ->
             pred(T, is_nth_pred(Pred, fun is_nth_of_type/3, fun ziptree:right/1, 1));
-        {'not', Selectors} ->
+        {pseudo, 'not', Selectors} ->
             NotPred = pred(Selectors, ?true),
             pred(T, fun(Tree) ->
                 Pred(Tree)

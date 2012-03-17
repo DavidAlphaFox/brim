@@ -10,91 +10,85 @@
               orelse C =:= $-
               orelse C =:= $_).
 
--define(is_whitespace(C), C =:= 32
-                   orelse C =:= 9).
+-define(is_ws(C), C =:= 32
+           orelse C =:= 9).
 
--define(is_combinator(C), C =:= 32
-                   orelse C =:= $>
-                   orelse C =:= $+
-                   orelse C =:= $~).
-
--define(is_match(C), C =:= $=
-              orelse C =:= $~
-              orelse C =:= $^
-              orelse C =:= $$).  % *= is handled as a special case
+-define(is_token(C), C =:= $#
+              orelse C =:= $.
+              orelse C =:= $:
+              orelse C =:= $(
+              orelse C =:= $)
+              orelse C =:= $[
+              orelse C =:= $]).
 
 scan(String) ->
-    try lex(parse_ws(tokenize(String)))
+    try lex2(lex1(tokenize(string:strip(String))))
     catch
         throw:{Error, Args} ->
             erlang:error(Error, Args)
     end.
 
-lex(['#', {ident, I}|T]) ->
-    [{id, I}|lex(T)];
-lex(['.', {ident, I}|T]) ->
-    [{class, I}|lex(T)];
-lex([':', {ident, "not"}, '('|T]) ->
-    {T1, T2} = match_parenthesis(T),
-    [{'not', lex(T1)}|lex(T2)];
-lex([':', {ident, I}, '(', {ident, N}, ')'|T]) ->
-    [{pseudo, I, try_to_integer(N)}|lex(T)];
-lex([':', {ident, I}|T]) ->
-    [{pseudo, I}|lex(T)];
-lex(['[', {ident, I}, ']'|T]) ->
-    [{attrib, I}|lex(T)];
-lex(['[', {ident, I}, {match, M}, {string, S}, ']'|T]) ->
-    [{attrib, I, M, S}|lex(T)];
-lex(['[', {ident, I}, {match, M}, {ident, S}, ']'|T]) ->
-    [{attrib, I, M, S}|lex(T)];
-lex([{ident, I}|T]) ->
-    [{element, I}|lex(T)];
-lex([{relation, _} = H|T]) ->
-    [H|lex(T)];
-lex([]) ->
-    [];
-lex(Tokens) ->
-    throw({syntax_error, [Tokens]}).
+lex1([ws, {match, _} = H|T])    -> lex1([H|T]);
+lex1([ws, {relation, _} = H|T]) -> lex1([H|T]);
+lex1([{match, _} = H, ws|T])    -> [H|lex1(T)];
+lex1([{relation, _} = H, ws|T]) -> [H|lex1(T)];
+lex1(['[', ws|T])               -> ['['|lex1(T)];
+lex1([ws, ']'|T])               -> [']'|lex1(T)];
+lex1(['(', ws|T])               -> ['('|lex1(T)];
+lex1([ws, ')'|T])               -> [')'|lex1(T)];
+lex1([ws|T])                    -> [{relation, ancestor}|lex1(T)];
+lex1([H|T])                     -> [H|lex1(T)];
+lex1([])                        -> [].
 
-parse_ws([ws, {match, _} = H|T])    -> parse_ws([H|T]);
-parse_ws([ws, {relation, _} = H|T]) -> parse_ws([H|T]);
-parse_ws([{match, _} = H, ws|T])    -> [H|parse_ws(T)];
-parse_ws([{relation, _} = H, ws|T]) -> [H|parse_ws(T)];
-parse_ws(['[', ws|T])               -> ['['|parse_ws(T)];
-parse_ws([ws, ']'|T])               -> [']'|parse_ws(T)];
-parse_ws(['(', ws|T])               -> ['('|parse_ws(T)];
-parse_ws([ws, ')'|T])               -> [')'|parse_ws(T)];
-parse_ws([ws|T])                    -> [{relation, ancestor}|parse_ws(T)];
-parse_ws([H|T])                     -> [H|parse_ws(T)];
-parse_ws([])                        -> [].
+lex2(['#', {ident, I}|T]) ->
+    [{id, I}|lex2(T)];
+lex2(['.', {ident, I}|T]) ->
+    [{class, I}|lex2(T)];
+lex2([':', {ident, "not"}, '('|T]) ->
+    {T1, T2} = match_parenthesis(T),
+    [{pseudo, 'not', lex2(T1)}|lex2(T2)];
+lex2([':', {ident, I}, '(', {ident, N}, ')'|T]) ->
+    [{pseudo, list_to_atom(I), try_to_integer(N)}|lex2(T)];
+lex2([':', {ident, I}|T]) ->
+    [{pseudo, list_to_atom(I)}|lex2(T)];
+lex2(['[', {ident, I}, ']'|T]) ->
+    [{attrib, I}|lex2(T)];
+lex2(['[', {ident, I}, {match, M}, {string, S}, ']'|T]) ->
+    [{attrib, I, M, S}|lex2(T)];
+lex2(['[', {ident, I}, {match, M}, {ident, S}, ']'|T]) ->
+    [{attrib, I, M, S}|lex2(T)];
+lex2([{ident, I}|T]) ->
+    [{element, I}|lex2(T)];
+lex2([{element, _} = H|T]) ->
+    [H|lex2(T)];
+lex2([{relation, _} = H|T]) ->
+    [H|lex2(T)];
+lex2([]) ->
+    [];
+lex2(Tokens) ->
+    throw({syntax_error, [Tokens]}).
 
 tokenize([]) ->
     [];
-tokenize([H|T] = S) ->
-    {Token, R} = if  ?is_whitespace(H) -> whitespace(S);
-                     ?is_combinator(H) -> combinator(S);
-                     H =:= $*          -> star(S);
-                     ?is_match(H)      -> match(S);
-                     ?is_ident(H)      -> ident(S);
-                     H =:= $"          -> string(T);
-                     H =:= $#          -> {'#', T};
-                     H =:= $.          -> {'.', T};
-                     H =:= $:          -> {':', T};
-                     H =:= $(          -> {'(', T};
-                     H =:= $)          -> {')', T};
-                     H =:= $[          -> {'[', T};
-                     H =:= $]          -> {']', T};
-                     true              -> throw({syntax_error, [S]})
-                 end,
+tokenize(S) ->
+    {Token, R} = case S of
+        [H|_] when ?is_ident(H) -> ident(S);
+        [H|T] when ?is_token(H) -> {list_to_atom([H]), T};
+        "="  ++ T               -> {{match, equals}, T};
+        "~=" ++ T               -> {{match, includes}, T};
+        "^=" ++ T               -> {{match, begins_with}, T};
+        "$=" ++ T               -> {{match, ends_with}, T};
+        "*=" ++ T               -> {{match, contains}, T};
+        ">"  ++ T               -> {{relation, parent}, T};
+        "+"  ++ T               -> {{relation, adjacent}, T};
+        "~"  ++ T               -> {{relation, sibling}, T};
+        "*"  ++ T               -> {{element, "*"}, T};
+        [$"|T]                  -> string(T);
+        [H|T] when ?is_ws(H)    -> whitespace(T);
+        _                       -> throw({syntax_error, [S]})
+    end,
     [Token|tokenize(R)].
 
-star("*=" ++ _ = S) ->
-    match(S);
-star(S) ->
-    ident(S).
-
-ident([$*|T]) ->
-    {{ident, "*"}, T};
 ident(S) ->
     ident(S, []).
 
@@ -103,30 +97,10 @@ ident([H|T], A) when ?is_ident(H) ->
 ident(T, A) ->
     {{ident, lists:reverse(A)}, T}.
 
-whitespace([H|T]) when ?is_whitespace(H) ->
+whitespace([H|T]) when ?is_ws(H) ->
     whitespace(T);
 whitespace(T) ->
     {ws, T}.
-
-match("="  ++ T) -> {{match, equals}, T};
-match("~=" ++ T) -> {{match, includes}, T};
-match("^=" ++ T) -> {{match, begins_with}, T};
-match("$=" ++ T) -> {{match, ends_with}, T};
-match("*=" ++ T) -> {{match, contains}, T};
-match(T)         -> throw({syntax_error, [T]}).
-
-combinator(S) ->
-    combinator(S, []).
-
-combinator([H|T], A) when ?is_combinator(H) ->
-    combinator(T, [H|A]);
-combinator(T, A) ->
-    case string:strip(lists:reverse(A)) of
-        ">" -> {{relation, parent}, T};
-        "+" -> {{relation, adjacent}, T};
-        "~" -> {{relation, sibling}, T};
-        M   -> throw({syntax_error, [M]})
-    end.
 
 string(S) ->
     string(S, []).
