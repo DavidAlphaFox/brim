@@ -18,8 +18,14 @@ transform(Tree) ->
     case erl_syntax:type(Tree) of
         application ->
             case erl_syntax_lib:analyze_application(Tree) of
-                {sel, 1} ->
-                    replacement_tree(Tree);
+                {brim, FA} when FA == {content, 3};
+                                FA == {map, 4};
+                                FA == {attr, 4};
+                                FA == {id, 3};
+                                FA == {class, 3};
+                                FA == {add_class, 3};
+                                FA == {remove_class, 3} ->
+                    maybe_replace(Tree);
                 _ ->
                     Tree
             end;
@@ -27,14 +33,21 @@ transform(Tree) ->
             Tree
     end.
 
-replacement_tree(Tree) ->
-    [Arg] = erl_syntax:application_arguments(Tree),
-    try brim_selector_lex:scan(erl_syntax:concrete(Arg)) of
-        Selector ->
-            erl_syntax:abstract(Selector)
-    catch
-        _:Error ->
-            throw({Error, erl_syntax:get_pos(Tree)})
+maybe_replace(Tree) ->
+    [Arg1, Selector|Args] = erl_syntax:application_arguments(Tree),
+    case erl_syntax:type(Selector) of
+        string ->
+            try brim_selector_lex:scan(erl_syntax:concrete(Selector)) of
+                Parsed ->
+                    ParsedTree = erl_syntax:abstract(Parsed),
+                    Op = erl_syntax:application_operator(Tree),
+                    erl_syntax:application(Op, [Arg1, ParsedTree|Args])
+            catch
+                _:Error ->
+                    throw({Error, erl_syntax:get_pos(Tree)})
+            end;
+        _ ->
+            Tree
     end.
 
 filename(Forms) ->
