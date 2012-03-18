@@ -22,7 +22,7 @@
               orelse C =:= $]).
 
 scan(String) ->
-    try lex2(lex1(tokenize(string:strip(String))))
+    try {selector, lex2(lex1(tokenize(string:strip(String))))}
     catch
         throw:{Error, Args} ->
             erlang:error(Error, Args)

@@ -1,7 +1,5 @@
 -module(brim_selector_lex_tests).
 
--import(brim_selector_lex, [scan/1]).
-
 -include_lib("eunit/include/eunit.hrl").
 
 basic_test() ->
@@ -99,3 +97,9 @@ together_with_relations_test() ->
                   {relation, adjacent},
                   {attrib, "fff"}],
                  scan("aaa.bbb > ccc#ddd * *:eee + [fff]")).
+
+%% Helper
+%%
+scan(L) ->
+    {selector, S} = brim_selector_lex:scan(L),
+    S.

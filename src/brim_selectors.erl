@@ -6,8 +6,10 @@
 
 -define(true, fun(_) -> true end).
 
-parse(L) ->
-    pred(brim_selector_lex:scan(L)).
+parse({selector, S}) ->
+    pred(S);
+parse(S) when is_list(S) ->
+    parse(brim_selector_lex:scan(S)).
 
 pred(Selectors) ->
     pred(lists:reverse(Selectors), ?true).

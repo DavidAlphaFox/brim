@@ -3,6 +3,7 @@
   {vsn, "0.0.1"},
   {modules, [brim,
              brim_html,
+             brim_parse_transform,
              brim_selector_lex,
              brim_selectors,
              trane,
